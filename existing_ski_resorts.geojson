@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "existing_ski_resorts",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": null, "Name": "Crystal Mountain" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -121.482559872587501, 46.929831453051371 ] ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "Snoqualmie/ Alpental" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -121.420140573139307, 47.407457457540197 ] ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "Stevens Pass" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -121.09070815645164, 47.739454203365383 ] ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "Mt. Baker" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -121.666750883244276, 48.855850689607315 ] ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "Mission Ridge" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -120.408595998293293, 47.283696801862767 ] ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "White Pass" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -121.395255338807431, 46.61961578976738 ] ] } }
+]
+}

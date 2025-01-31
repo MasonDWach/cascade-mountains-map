@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cascade Mountains Web Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+            margin: 0;
+        }
+
+        .legend-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        .legend img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="legend" class="legend-container"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([47.5, -121], 9);
+
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+            minZoom: 0,
+            maxZoom: 18
+        }).addTo(map);
+
+        var legends = {
+            "Average Winter Temperature": "Average Winter Temperature Legend.svg",
+            "Total Winter Precipitation": "Precipitation Legend.svg",
+            "Slope": "Slope Legend.svg"
+        };
+
+        function updateLegend() {
+            let activeLayers = [];
+
+            // Check if each raster layer is currently active
+            for (let key in legends) {
+                if (map.hasLayer(overlayMaps[key])) {
+                    activeLayers.push(legends[key]);
+                }
+            }
+
+            let legendDiv = document.getElementById("legend");
+            if (activeLayers.length > 0) {
+                legendDiv.innerHTML = activeLayers.map(src => `<img src="${src}" alt="Legend">`).join("<br>");
+                legendDiv.style.display = "block";
+            } else {
+                legendDiv.style.display = "none";
+            }
+        }
+
+        var overlayMaps = {}; // Ensure this is defined before adding layers
+
+        var averageWinterTemp = L.tileLayer('./Average Winter Temperature Tiles/{z}/{x}/{y}.png', {
+            minZoom: 0,
+            maxZoom: 18,
+            minNativeZoom: 9,
+            maxNativeZoom: 12
+        });
+        overlayMaps["Average Winter Temperature"] = averageWinterTemp;
+
+        var totalWinterPrecipitation = L.tileLayer('./Total Winter Precipitation Tiles/{z}/{x}/{y}.png', {
+            minZoom: 0,
+            maxZoom: 18,
+            minNativeZoom: 9,
+            maxNativeZoom: 12
+        });
+        overlayMaps["Total Winter Precipitation"] = totalWinterPrecipitation;
+
+        var slopeTilesNew = L.tileLayer('./Sope Tiles New/{z}/{x}/{y}.png', {
+            minZoom: 0,
+            maxZoom: 18,
+            minNativeZoom: 9,
+            maxNativeZoom: 15
+        });
+        overlayMaps["Slope"] = slopeTilesNew;
+
+        var cascadesElevationMask = L.tileLayer('./Cascades Elevation Mask/{z}/{x}/{y}.png', {
+            minZoom: 0,
+            maxZoom: 18,
+            minNativeZoom: 9,
+            maxNativeZoom: 14
+        });
+        overlayMaps["Cascades 1500m Elevation Mask"] = cascadesElevationMask;
+
+        var baseMaps = { "OpenStreetMap": osm };
+
+
+        var controlLayers = L.control.layers(baseMaps, overlayMaps).addTo(map);
+        
+        map.on('overlayadd', updateLegend);
+        map.on('overlayremove', updateLegend);
+
+        function createSkiIcon(color, size) {
+            return L.divIcon({
+                className: '',
+                html: `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" 
+                        stroke="black" stroke-linecap="round" stroke-linejoin="round" 
+                        width="${size}" height="${size}" stroke-width="2">
+                        <path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612z"></path>
+                        <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2"></path>
+                    </svg>
+                `,
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size]
+            });
+        }
+
+        fetch('./potential_ski_resort_sites.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var potentialSkiSites = L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        return L.marker(latlng, { icon: createSkiIcon("#0080ff", 26) });
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties && feature.properties.Name) {
+                            layer.bindTooltip(feature.properties.Name, { permanent: false, direction: 'top', offset: [0, -30] });
+                        }
+                    }
+                }).addTo(map);
+
+                overlayMaps["Potential Ski Resort Sites"] = potentialSkiSites;
+                controlLayers.addOverlay(potentialSkiSites, "Potential Ski Resort Sites");
+            });
+
+        fetch('./existing_ski_resorts.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var existingSkiResorts = L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        return L.marker(latlng, { icon: createSkiIcon("#666666", 20) });
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties && feature.properties.Name) {
+                            layer.bindTooltip(feature.properties.Name, { permanent: false, direction: 'top', offset: [-1, -25] });
+                        }
+                    }
+                }).addTo(map);
+
+                overlayMaps["Existing Ski Resorts"] = existingSkiResorts;
+                controlLayers.addOverlay(existingSkiResorts, "Existing Ski Resorts");
+            });
+
+        fetch('./designated_wilderness3.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var designatedWildernessLayer = L.geoJSON(data, {
+                    style: {
+                        color: '#228B22',
+                        weight: 2,
+                        fillColor: '#ADFF2F',
+                        fillOpacity: 0.8
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(`<b>Area Name:</b> ${feature.properties.name || 'Unknown'}`);
+                    }
+                }).addTo(map);
+
+                overlayMaps["Designated Wilderness"] = designatedWildernessLayer;
+                controlLayers.addOverlay(designatedWildernessLayer, "Designated Wilderness");
+            });
+
+        fetch('./inventoried_roadless_areas_2.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var inventoriedRoadlessLayer = L.geoJSON(data, {
+                    style: {
+                        color: '#824c00',
+                        weight: 2,
+                        fillColor: '#9c872a',
+                        fillOpacity: 0.8
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(`<b>Area Name:</b> ${feature.properties.name || 'Unknown'}`);
+                    }
+                }).addTo(map);
+
+                overlayMaps["Inventoried Roadless Area"] = inventoriedRoadlessLayer;
+                controlLayers.addOverlay(inventoriedRoadlessLayer, "Inventoried Roadless Area");
+            });
+
+    </script>
+</body>
+</html>
