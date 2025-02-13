@@ -36,7 +36,24 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([47.5, -121], 9);
+
+        // Function to extract URL parameters
+        function getURLParams() {
+            let urlParams = new URLSearchParams(window.location.search || window.location.hash.substring(1));
+
+            return {
+                zoom: urlParams.get('zoom') ? parseInt(urlParams.get('zoom')) : 9,
+                lat: urlParams.get('lat') ? parseFloat(urlParams.get('lat')) : 47.5,
+                lon: urlParams.get('lon') ? parseFloat(urlParams.get('lon')) : -121.0
+            };
+        }
+
+        // Get map settings from URL
+        const mapParams = getURLParams();
+
+        // Initialize Leaflet Map with URL-defined center
+        var map = L.map('map').setView([mapParams.lat, mapParams.lon], mapParams.zoom);
+
 
         var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
